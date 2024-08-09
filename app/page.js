@@ -1,157 +1,203 @@
 "use client";
-import Image from "next/image";
-import { useState, useEffect } from "react";
-import { borderColor, Box, color, Stack } from "@mui/system";
-import { Button, TextField } from "@mui/material";
-import Markdown from "react-markdown";
-import SendIcon from "@mui/icons-material/Send";
-import IconButton from "@mui/material/IconButton";
+import { useRef, useState } from "react";
 
-const style = {
-  transition: "all 0.4s ease",
-  "&:hover": {
-    transform: "scale(1.05)",
-    boxShadow: "0 6px 8px rgba(0,0,0,0.15)",
-    borderColor: "black",
-  },
-  justifyContent: "center",
-};
+import { useRouter } from "next/navigation";
+import {
+  Box,
+  Typography,
+  Button,
+  TextField,
+  useMediaQuery,
+  Grid,
+} from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import { auth } from "../app/firebase";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import { checkValidData } from "./validate";
 
-const style_1 = {
-  transition: "all 0.4s ease",
-  "&:hover": {
-    transform: "scale(1.05)",
-    boxShadow: "0 6px 8px rgba(0,0,0,0.15)",
-    borderColor: "black",
-  },
-  justifyContent: "center",
-  alignItems: "center",
-  position: "absolute",
-  top: "20%",
-  left: "20%",
-};
+const Login = () => {
+  const [isSignInForm, setIsSignInForm] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const router = useRouter();
+  const email = useRef(null);
+  const password = useRef(null);
+  const fullname = useRef(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-export default function Home() {
-  const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      content: "Hi! I'm you support agent today, how can I assist you today?",
-    },
-  ]);
+  const handleButtonClick = () => {
+    const message = checkValidData(
+      email.current.value,
+      password.current.value
+      // fullname.current.value
+    );
+    setErrorMessage(message);
 
-  const [message, setMessage] = useState("");
-
-  const sendMessages = async () => {
-    setMessage("");
-    setMessages((messages) => [
-      ...messages,
-      { role: "user", content: message },
-      { role: "assistant", content: "" },
-    ]);
-    const response = fetch("api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify([...messages, { role: "user", content: message }]),
-    }).then(async (res) => {
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-
-      let result = "";
-      return reader.read().then(function processText({ done, value }) {
-        if (done) {
-          return result;
-        }
-        const text = decoder.decode(value || new Int8Array(), { stream: true });
-        setMessages((messages) => {
-          let lastMessage = messages[messages.length - 1];
-          let otherMessages = messages.slice(0, messages.length - 1);
-          return [
-            ...otherMessages,
-            {
-              ...lastMessage,
-              content: lastMessage.content + text,
-            },
-          ];
+    if (message) return;
+    if (!isSignInForm) {
+      createUserWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      )
+        .then((userCredential) => {
+          router.push("/");
+        })
+        .catch((error) => {
+          const errorMessage = error.message;
+          setErrorMessage("Invalid Credentials, " + errorMessage);
         });
-        return reader.read().then(processText);
-      });
-    });
+    } else {
+      //sign in
+      signInWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      )
+        .then(() => {
+          // Signed in
+          router.push("/");
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          console.log(errorMessage);
+          setErrorMessage("Invalid Credentials" + ", " + errorMessage);
+        });
+    }
+  };
+
+  const toggleSignInForm = () => {
+    setIsSignInForm(!isSignInForm);
   };
 
   return (
     <Box
-      //sx={style_1}
-      width="100vw"
-      height="100vh"
       display="flex"
-      flexDirection="column"
       justifyContent="center"
       alignItems="center"
-      //borderRadius={12}
-      backgroundColor="gray"
+      height="100vh"
+      sx={{
+        backgroundColor: "gray",
+      }}
     >
-      <Stack
-        direction="column"
-        width="500px"
-        height="600px"
-        border="3px solid yellow"
-        borderRadius={10}
-        p={2}
-        spacing={3}
-      >
-        <Stack
-          direction="column"
-          spacing={2}
-          flexGrow={1}
-          overflow="auto"
-          maxHeight="100%"
+      <Grid container justifyContent="center">
+        <Grid
+          item
+          xs={12}
+          sm={8}
+          md={6}
+          lg={4}
+          sx={{
+            bgcolor: "#fff",
+            p: 4,
+            border: "2px solid grey",
+            borderRadius: 2,
+            boxShadow: 3,
+          }}
         >
-          {messages.map((message, index) => (
-            <Box
-              key={index}
-              display="flex"
-              justifyContent={
-                message.role === "assistant" ? "flex-start" : "flex-end"
-              }
+          <Typography variant="h4" component="h2" gutterBottom align="center">
+            {isSignInForm ? "Sign In" : "Sign Up"}
+          </Typography>
+          <form onSubmit={(e) => e.preventDefault()} style={{ width: "100%" }}>
+            {!isSignInForm && (
+              <TextField
+                inputRef={fullname}
+                label="Full Name"
+                variant="outlined"
+                fullWidth
+                margin="normal"
+              />
+            )}
+            <TextField
+              inputRef={email}
+              label="Email Address"
+              type="email"
+              variant="outlined"
+              fullWidth
+              margin="normal"
+            />
+            <TextField
+              inputRef={password}
+              label="Password"
+              type="password"
+              variant="outlined"
+              fullWidth
+              margin="normal"
+            />
+            {errorMessage && (
+              <Typography color="error" variant="body2" sx={{ mt: 2 }}>
+                {errorMessage}
+              </Typography>
+            )}
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              sx={{ mt: 2 }}
+              onClick={handleButtonClick}
             >
-              <Box
-                //sx={style}
-                backgroundColor={
-                  message.role === "assistant" ? "yellow" : "green"
-                }
-                color={message.role === "assistant" ? "black" : "white"}
-                fontWeight={500}
-                borderRadius={8}
-                padding={3}
-              >
-                {message.content}
-              </Box>
-            </Box>
-          ))}
-        </Stack>
-        <Stack direction="row" spacing={3} padding={1}>
-          <TextField
-            label="message"
-            fullWidth={10}
-            color="success"
-            variant="outlined"
-            padding={2}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
-          <IconButton
-            aria-label="send"
-            onClick={sendMessages}
-            color="success"
-            sx={style}
-            size="normal"
-          >
-            <SendIcon />
-          </IconButton>
-        </Stack>
-      </Stack>
+              {isMobile
+                ? isSignInForm
+                  ? "Sign In"
+                  : "Sign Up"
+                : isSignInForm
+                ? "Sign In to Your Account"
+                : "Create Your Account"}
+            </Button>
+            <Typography variant="body2" sx={{ mt: 2 }}>
+              {isSignInForm ? (
+                <>
+                  New User?{" "}
+                  <Button
+                    variant="text"
+                    color="primary"
+                    sx={{
+                      textDecoration: "underline",
+                      cursor: "pointer",
+                      padding: 0,
+                      minWidth: "auto",
+                      "&:hover": {
+                        backgroundColor: "transparent", // To remove background on hover
+                      },
+                    }}
+                    onClick={toggleSignInForm}
+                  >
+                    Sign up now
+                  </Button>
+                  .
+                </>
+              ) : (
+                <>
+                  Already registered?{" "}
+                  <Button
+                    variant="text"
+                    color="primary"
+                    sx={{
+                      textDecoration: "underline",
+                      cursor: "pointer",
+                      padding: 0,
+                      minWidth: "auto",
+                      "&:hover": {
+                        backgroundColor: "transparent", // To remove background on hover
+                      },
+                    }}
+                    onClick={toggleSignInForm}
+                  >
+                    Sign In now
+                  </Button>
+                  .
+                </>
+              )}
+            </Typography>
+          </form>
+        </Grid>
+      </Grid>
     </Box>
   );
-}
+};
+
+export default Login;
