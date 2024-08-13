@@ -75,7 +75,7 @@ export default function Home() {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content: "Hi! I'm your support agent today, how can I assist you today?",
+      content: "Hi! I'm your support agent 🕵️ today, how can I assist you?",
       rating: null, // Add rating property
     },
   ]);
@@ -321,6 +321,12 @@ export default function Home() {
               "@media (max-width: 600px)": {
                 padding: 1,
               },
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessages();
+              }
             }}
           />
           <IconButton
