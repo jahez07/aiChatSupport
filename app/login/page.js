@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
+import IconButton from "@mui/material/IconButton";
 
 import { useRouter } from "next/navigation";
 import {
@@ -81,7 +82,7 @@ const Login = () => {
       alignItems="center"
       height="100vh"
       sx={{
-        backgroundColor: "white",
+        backgroundColor: "black",
       }}
     >
       <Grid container justifyContent="center">
@@ -94,9 +95,9 @@ const Login = () => {
           sx={{
             bgcolor: "#fff",
             p: 4,
-            border: "2px solid yellow",
+            border: "3px solid yellow",
             borderRadius: 4,
-            boxShadow: '0 0 10px rgba(0, 0, 0, 0.2)',
+            boxShadow: '0 0 10px rgba(255, 255, 255, 0.2)',
           }}
         >
           <Typography variant="h4" component="h1" gutterBottom align="center">
@@ -134,11 +135,11 @@ const Login = () => {
               </Typography>
             )}
             <Button
-              variant="outlined"
-              color="primary"
+              variant="filled"
+              color="warning"
               fullWidth
               //sx={{ mt: 1, borderColor: 'white', color: 'white' }}
-              sx={{ mt: 2, border: '1px solid black', color: 'black'  }}
+              sx={{ mt: 2, border: '2px solid black', color: 'black'  }}
               onClick={handleButtonClick}
             >
               {isMobile
