@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect,ChangeEvent } from "react";
 import { borderColor, Box, color, Stack, keyframes } from "@mui/system";
 import { Button, TextField, Typography, Rating, Grid} from "@mui/material";
 import Markdown from "react-markdown";
@@ -58,6 +58,7 @@ const style_1 = {
 export default function Home() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [userUrl, setUserUrl] = useState("");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -71,6 +72,29 @@ export default function Home() {
 
     return () => unsubscribe();
   }, []);
+
+  const handleUserUrlChange = (event) => {
+    setUserUrl(event.target.value);
+  };
+  
+  const handleUserQuestionChange = (event) => {
+    setUserQuestion(event.target.value);
+  };
+  
+  const fetchWebpageData = async (e) => {
+    console.log(
+      "Calling pinecone-insert-data API to scrape webpage data and insert to DB"
+    );
+    const res = await fetch("/api/pinecone-insert-data", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ url: userUrl }),
+    });
+    const data = await res.json();
+    console.log(data);
+  };
 
   const [messages, setMessages] = useState([
     {
@@ -197,13 +221,13 @@ export default function Home() {
           className="email"
           sx={{
             color: "#333",
-            fontWeight: "bold",
+            fontWeight: "normal",
             mt: 1,
             opacity: 0,
             visibility: "hidden",
             transition: "opacity 0.3s ease, visibility 0.3s ease",
             fontSize: "14px",
-            "@media (max-width: 600px)": {
+            "@media (max-width)": {
               fontSize: "12px",
             },
           }}
@@ -211,7 +235,30 @@ export default function Home() {
           {user.email}
         </Typography>
       </Box>
-  
+      <div className="grid gap-3 m-6 grid-cols-4 p-7 bg-black-300">
+        <div className="col-span-4">
+          <p className="font-medium text-orange-500">URL of the external data source page</p>
+        </div>    
+        <div className="col-span-3">
+          <input
+            type="text"
+            id="user_url"
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full"
+            placeholder="Enter URL"
+            onChange={handleUserUrlChange}
+            value={userUrl}
+          />
+        </div>
+
+        <div className="col-span-1">
+          <input
+            type="button"
+            className="rounded-md bg-orange-500 py-3 px-4 text-black"
+            value="Upload Data"
+            onClick={fetchWebpageData}
+          />
+        </div>
+      </div>
       <Stack
         direction="column"
         width={{ xs: "80%", sm: "70%", md: "40%", lg: "40%" }}
@@ -221,11 +268,12 @@ export default function Home() {
         p={2}
         spacing={3}
         sx={{
-          "@media (max-width: 700px)": {
+          "@media (max-width)": {
             height: "80%",
           },
         }}
       >
+
         <Stack
           direction="column"
           spacing={2}
@@ -237,6 +285,7 @@ export default function Home() {
             <Box
               key={index}
               display="flex"
+              maxHeight={100}
               justifyContent={
                 message.role === "assistant" ? "flex-start" : "flex-end"
               }
@@ -244,16 +293,17 @@ export default function Home() {
               <Box
                 //sx={style}
                 backgroundColor={
-                  message.role === "assistant" ? "white" : "orange"
+                  message.role === "assistant" ? "black" : "orange"
                 }
-                color={message.role === "assistant" ? "black" : "black"}
+                color={message.role === "assistant" ? "yellow" : "black"}
                 fontWeight={500}
-                borderRadius={8}
-                padding={3}
+                fontSize={message.role === "assistant" ? 18 : 16}
+                borderRadius={6}
+                padding={1.5} // Reduced the thickness or height of the box
                 //maxWidth="80%"
                 sx={{
-                  "@media (max-width: 600px)": {
-                    padding: 1,
+                  "@media (max-width)": {
+                    //padding: 1,
                   },
                 }}
                 
@@ -269,7 +319,7 @@ export default function Home() {
                 onChange={(event, newValue) =>
                   handleRatingChange(index, newValue)
                 }
-                sx={{ mt: 1 }}
+                sx={{ mt: 0.5, borderColor: 'white' }}
               /> 
             
               <Typography 
@@ -335,8 +385,7 @@ export default function Home() {
             color="warning"
             sx={style}
             size="normal"
-          >
-            <SendIcon />
+          >Send
           </IconButton>
         </Stack>
       </Stack>

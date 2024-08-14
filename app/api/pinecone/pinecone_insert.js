@@ -16,6 +16,7 @@ export default async function handler(
     }
 
     const userUrl = req.body.url;
+    const userString = req.body.someString;
     console.log("User url: ", userUrl);
 
     const options = {
@@ -23,13 +24,13 @@ export default async function handler(
     };
 
     // Call this when you want to fetch the content of the entire HTML
-    // const entirePageText = await getEntirePageText(userUrl, options);
+    const entirePageText = await getEntirePageText(userUrl, options);
 
     // Call this when you want to fetch only the content of the Div
-    const entireDivText = await getEntireDivText(userUrl, options);
+    // const entireDivText = await getEntireDivText(userUrl, options);
 
-    const metadata = { topic: "travel" };
-    uploadDocumentToPinecone(entireDivText, metadata);
+    const metadata = { topic: userString };
+    uploadDocumentToPinecone(entirePageText, metadata);
 
     res.status(200).json({ message: "Data Insert Success" });
 }
